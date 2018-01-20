@@ -269,10 +269,10 @@ class OrderForms {
 			$title = 'New Order Form';
 			$billic->set_title($title);
 			echo '<h1>' . $title . '</h1>';
-			if (array_key_exists('Lo', $billic->lic)) {
+			$license_data = $billic->get_license_data();
+			if ($license_data['desc']!='Unlimited') {
 				$lic_count = $db->q('SELECT COUNT(*) FROM `orderforms`');
-				$lic_count = $lic_count[0]['COUNT(*)'];
-				if ($lic_count >= $billic->lic['Lo']) {
+				if ($lic_count[0]['COUNT(*)'] >= $license_data['orderforms']) {
 					err('Unable to create a new order form because you have reached your limit. Please upgrade your Billic License.');
 				}
 			}
@@ -313,20 +313,6 @@ class OrderForms {
 		$title = 'Order Forms';
 		$billic->set_title($title);
 		echo '<h1><i class="icon-list"></i> ' . $title . '</h1>';
-		if (array_key_exists('Lo', $billic->lic)) {
-			$lic_count = $db->q('SELECT COUNT(*) FROM `orderforms`');
-			$lic_count = $lic_count[0]['COUNT(*)'];
-			$lic_percent = ceil((100 / $billic->lic['Lo']) * $lic_count);
-			echo '<div class="alert alert-';
-			if ($lic_percent >= 80) {
-				echo 'danger';
-			} else if ($lic_percent >= 60) {
-				echo 'warning';
-			} else {
-				echo 'info';
-			}
-			echo '" role="alert">Your Billic license limits you to ' . $billic->lic['Lo'] . ' order forms. You are currently using ' . $lic_count . ' at ' . $lic_percent . '% capacity.</div>';
-		}
 		$billic->show_errors();
 		echo '<a href="New/" class="btn btn-success"><i class="icon-plus"></i> New Order Form</a>';
 		echo '<table class="table table-striped"><tr><th>Name</th><th style="width:20%">Actions</th></tr>';
