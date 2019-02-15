@@ -91,7 +91,7 @@ class OrderForms {
 				}
 				if (is_array($_POST['order_option'])) {
 					foreach ($_POST['order_option'] as $id => $order) {
-						$db->q('UPDATE `orderformoptions` SET `price` = ?, `order` = ? WHERE `id` = ?', $_POST['price_option'][$id], $order, $id);
+						$db->q('UPDATE `orderformoptions` SET `price` = ?, `setup` = ?, `order` = ? WHERE `id` = ?', $_POST['price_option'][$id], $_POST['setup_option'][$id], $order, $id);
 					}
 				}
 				if (is_array($_POST['order_option_name'])) {
@@ -202,7 +202,7 @@ class OrderForms {
 			} else {
 				$header.= 'Module Variable';
 			}
-			$header.= '</th><th>Type</th><th style="min-width:80px">Unit Price</th><th style="width:100px">Order</th><th>Action</th></tr>';
+			$header.= '</th><th>Type</th><th style="min-width:80px">Unit Price</th><th style="min-width:80px">Unit Setup</th><th style="width:100px">Order</th><th>Action</th></tr>';
 			echo $header;
 			$orderformitems = $db->q('SELECT * FROM `orderformitems` WHERE `parent` = ? ORDER BY `order`, `name` ASC', $orderform['id']);
 			if (empty($orderformitems)) {
@@ -229,7 +229,7 @@ class OrderForms {
 					}
 					echo '</select></td>';
 				}
-				echo '<td>' . $r['type'] . '</td><td>' . ($r['type'] == 'dropdown' || $r['type'] == 'dropdown_country' || $r['type'] == 'text' ? 'N/A' : '<input type="text" class="form-control" name="price[' . $r['id'] . ']" value="' . $r['price'] . '"  style="width: 100px">') . '</td><td><input type="text" class="form-control" name="order[' . $r['id'] . ']" size="2" value="' . $order . '"></td><td>';
+				echo '<td>' . $r['type'] . '</td><td>' . ($r['type'] == 'dropdown' || $r['type'] == 'dropdown_country' || $r['type'] == 'text' ? 'N/A' : '<input type="text" class="form-control" name="price[' . $r['id'] . ']" value="' . $r['price'] . '"  style="width: 100px">') . '</td><td>N/A</td><td><input type="text" class="form-control" name="order[' . $r['id'] . ']" size="2" value="' . $order . '"></td><td>';
 				if (!$imported) {
 					echo '<a href="delete/' . $r['id'] . '/" onclick="return confirm(\'Are you sure you want to delete?\');" class="btn btn-danger" title="Delete"><i class="icon-remove"></i></a>';
 				}
@@ -247,7 +247,7 @@ class OrderForms {
 						} else {
 							echo '<input type="text" class="form-control" name="opt_module_var[' . $option['id'] . ']" value="' . $option['module_var'] . '">';
 						}
-						echo '</td><td>' . $option['type'] . '</td><td><input type="text" class="form-control" name="price_option[' . $option['id'] . ']" value="' . $option['price'] . '"></td><td><div class="input-group"><div class="input-group-addon"><i class="icon-arrow-right"></i></div><input type="text" class="form-control" name="order_option[' . $option['id'] . ']" value="' . $order_opt . '"></div></td><td>';
+						echo '</td><td>' . $option['type'] . '</td><td><input type="text" class="form-control" name="price_option[' . $option['id'] . ']" value="' . $option['price'] . '"></td><td><input type="text" class="form-control" name="setup_option[' . $option['id'] . ']" value="' . $option['setup'] . '"></td><td><div class="input-group"><div class="input-group-addon"><i class="icon-arrow-right"></i></div><input type="text" class="form-control" name="order_option[' . $option['id'] . ']" value="' . $order_opt . '"></div></td><td>';
 						if (!$imported) {
 							echo '<a href="deleteoption/' . $option['id'] . '/" onclick="return confirm(\'Are you sure you want to delete?\');" class="btn btn-danger" title="Delete"><i class="icon-remove"></i></a>';
 						}
