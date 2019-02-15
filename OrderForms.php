@@ -292,11 +292,82 @@ class OrderForms {
 				if (strlen($_POST['name']) > 127) {
 					$billic->error('Name must be less than 128 characters');
 				}
+				$plan = $db->q('SELECT * FROM `orderforms` WHERE `name` = ?', $_POST['name']);
+				$plan = $plan[0];
+				if (!empty($plan)) {
+					$billic->error('An order form with that name already exists');
+				}
 				if (empty($billic->errors)) {
 					$db->insert('orderforms', array(
 						'name' => $_POST['name'],
 					));
 					$billic->redirect('/Admin/OrderForms/Edit/' . urlencode($_POST['name']) . '/');
+				}
+			}
+			$billic->show_errors();
+			$billic->modules['FormBuilder']->output(array(
+				'form' => $form,
+				'button' => 'Continue',
+			));
+			return;
+		}
+		if (isset($_GET['Clone'])) {
+			$name = urldecode($_GET['Clone']);
+			$title = 'Clone Order Form ' . safe($name);
+			$billic->set_title($title);
+			echo '<h1>' . $title . '</h1>';
+			$license_data = $billic->get_license_data();
+			if ($license_data['desc']!='Unlimited') {
+				$lic_count = $db->q('SELECT COUNT(*) FROM `orderforms`');
+				if ($lic_count[0]['COUNT(*)'] >= $license_data['orderforms']) {
+					err('Unable to create a new order form because you have reached your limit. Please upgrade your Billic License.');
+				}
+			}
+			$billic->module('FormBuilder');
+			$form = array(
+				'name' => array(
+					'label' => 'New Name',
+					'type' => 'text',
+					'required' => true,
+					'default' => '',
+				) ,
+			);
+			if (isset($_POST['Continue'])) {
+				$billic->modules['FormBuilder']->check_everything(array(
+					'form' => $form,
+				));
+				if (strlen($_POST['name']) > 127) {
+					$billic->error('Name must be less than 128 characters');
+				}
+				$plan = $db->q('SELECT * FROM `orderforms` WHERE `name` = ?', $_POST['name']);
+				$plan = $plan[0];
+				if (!empty($plan)) {
+					$billic->error('An order form with that name already exists');
+				}
+				if (empty($billic->errors)) {
+					$orderform = $db->q('SELECT * FROM `orderforms` WHERE `name` = ?', $name);
+					$orderform = $orderform[0];
+					if (empty($orderform)) {
+						err('The original plan "' . $name . '" does not exist');
+					}
+					$oldid = $orderform['id'];
+					unset($orderform['id']);
+					$orderform['name'] = $_POST['name'];
+					$newid = $db->insert('orderforms', $orderform);
+					$orderformitems = $db->q('SELECT * FROM `orderformitems` WHERE `parent` = ?', $oldid);
+					foreach($orderformitems as $item) {
+						$oldid_item = $item['id'];
+						unset($item['id']);
+						$item['parent'] = $newid;
+						$newid_item = $db->insert('orderformitems', $item);
+						$orderformoptions = $db->q('SELECT * FROM `orderformoptions` WHERE `parent` = ?', $oldid_item);
+						foreach($orderformoptions as $option) {
+							unset($option['id']);
+							$option['parent'] = $newid_item;
+							$db->insert('orderformoptions', $option);
+						}
+					}	
+					$billic->redirect('/Admin/OrderForms/Name/' . urlencode($_POST['name']) . '/');
 				}
 			}
 			$billic->show_errors();
@@ -315,7 +386,7 @@ class OrderForms {
 		echo '<h1><i class="icon-list"></i> ' . $title . '</h1>';
 		$billic->show_errors();
 		echo '<a href="New/" class="btn btn-success"><i class="icon-plus"></i> New Order Form</a>';
-		echo '<table class="table table-striped"><tr><th>Name</th><th style="width:20%">Actions</th></tr>';
+		echo '<table class="table table-striped"><tr><th>Name</th><th style="width:300px">Actions</th></tr>';
 		$orderforms = $db->q('SELECT * FROM `orderforms` ORDER BY `name` ASC');
 		$imported_count = 0;
 		foreach ($orderforms as $r) {
@@ -326,6 +397,7 @@ class OrderForms {
 			}
 			echo '<tr><td><a href="Edit/' . urlencode($r['name']) . '/">' . safe($r['name']) . '</a></td><td>';
 			echo '<a href="/Admin/OrderForms/Edit/' . urlencode($r['name']) . '/" class="btn btn-primary btn-xs"><i class="icon-edit-write"></i> Edit</a>';
+			echo '&nbsp;<a href="/Admin/OrderForms/Clone/' . urlencode($r['name']) . '/" class="btn btn-info btn-xs"><i class="icon-code-fork"></i> Clone</a>';
 			echo '&nbsp;<a href="/Admin/OrderForms/Delete/' . urlencode($r['name']) . '/" class="btn btn-danger btn-xs" title="Delete" onClick="return confirm(\'Are you sure you want to delete?\');"><i class="icon-remove"></i> Delete</a>';
 			echo '</tr>';
 		}
